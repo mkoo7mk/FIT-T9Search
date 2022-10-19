@@ -28,17 +28,17 @@ typedef struct{
 
 } Person;
 
-void printPerson(const Person p);
-int setPerson(Person *p, int num_rows, int val_len, char string_buffer[]);
+void printPerson(Person p);
+int setPerson(Person *p,int num_rows, int val_len, char string_buffer[]);
 char *toLower(char *a);
-void strreplace(char *p, const char old, const char new, const int only_first);
+void strreplace(char *p, char old, char new, int only_first);
 char charToInt(char c);
 void readFromFile(Person *people, int buffer[2]);
 void error_handler(int error_code, int number_of_rows);
-int queryNumbers(const Person p, const char num[], const int num_len);
-int queryNameNumber(const Person p, const char num[], const int num_len);
-int searchContact(const Person p, const char num[], const int num_len);
-int printQuerriedContacts(const Person people[SIZE], const char num[], const int num_len, int rows_num);
+int queryNumbers(Person p, char num[], int num_len);
+int queryNameNumber(Person p, char num[], int num_len);
+int searchContact(Person p, char num[], int num_len);
+int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows_num);
 
 int main(int argc, char **argv){
     Person people[SIZE];
@@ -70,7 +70,7 @@ int main(int argc, char **argv){
     return -error_code;
 }
 
-void printPerson(const Person p){
+void printPerson( Person p){
     for (int i = 0; i < p.name_len; i++)
         printf("%c", p.name[i]);
     printf(", ");
@@ -101,7 +101,7 @@ char *toLower(char *a){
     return a;
 }
 
-void strreplace(char *p, const char old, const char new, const int only_first){
+void strreplace(char *p, char old, char new, int only_first){
     for (int i = 0; i < (int)strlen(p); i++){
         if (p[i] == old){
             p[i] = new;
@@ -119,7 +119,7 @@ char charToInt(char c){
     return ' ';
 }
 
-int queryNumbers(const Person p, const char num[], const int num_len){
+int queryNumbers(Person p, char num[], int num_len){
     // Only numbers querry with plus sign
     int i, j, was_there;
     char num_plus[num_len];
@@ -144,7 +144,7 @@ int queryNumbers(const Person p, const char num[], const int num_len){
     return 0;
 }
 
-int queryNameNumber(const Person p, const char num[], const int num_len){
+int queryNameNumber(Person p, char num[], int num_len){
     int i, j, was_there;
     char char_buffer[p.name_len];
     for (i = 0; i < p.name_len; i++)
@@ -167,11 +167,11 @@ int queryNameNumber(const Person p, const char num[], const int num_len){
     return 0;
 }
 
-int searchContact(const Person p, const char num[], const int num_len){
+int searchContact(Person p, char num[], int num_len){
     return queryNumbers(p, num, num_len) || queryNameNumber(p, num, num_len);
 }
 
-int printQuerriedContacts(const Person people[SIZE], const char num[], const int num_len, int rows_num){
+int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows_num){
     int i, was_there = 0;
     for (i = 0; i < (int)floor(rows_num / 2); i++){
         if (searchContact(people[i], num, num_len)){
