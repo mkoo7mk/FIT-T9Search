@@ -164,7 +164,7 @@ int queryNameNumber(Person p, char num[], int num_len){
         char_buffer[i] = charToInt(p.name[i]);
     i = 0;
     toLower(char_buffer);
-    for (i = 0; i <= p.name_len - num_len; i++){
+    for (i = 0; i <= p.name_len - num_len; i++){ // Todo nenavazujuce substringy
         was_there = 0;
         for (j = 0; j < num_len; j++){
             if (char_buffer[i + j] == num[j])
