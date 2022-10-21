@@ -29,45 +29,27 @@ typedef struct{
 } Person;
 
 void printPerson(Person p);
-int setPerson(Person *p,int num_rows, int val_len, char string_buffer[]);
+int setPerson(Person p,int num_rows, int val_len, char string_buffer[]);
 char *toLower(char *a);
 void strreplace(char *p, char old, char new, int only_first);
 char charToInt(char c);
-void readFromFile(Person *people, int buffer[2]);
-void error_handler(int error_code, int number_of_rows);
+void readFromFile(int *int_buffer);
+int error_handler(int error_code, int number_of_rows);
 int queryNumbers(Person p, char num[], int num_len);
 int queryNameNumber(Person p, char num[], int num_len);
 int searchContact(Person p, char num[], int num_len);
 int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows_num);
+int printQuerriedContact(Person p, char num[], int num_len){
+    int was_there;
+    if ((was_there = searchContact(p, num, num_len)))
+        printPerson(p);
+    return was_there;
+}
 
-int main(int argc, char **argv){
-    Person people[SIZE];
-    int int_buffer[2], i = 0;
-    readFromFile(people, int_buffer);
-    int number_of_rows = int_buffer[0], error_code = int_buffer[1];
-
-    if (argc == 1 && !error_code){ // No query
-        for (i = 0; i < (int)floor(number_of_rows / 2); i++)
-            printPerson(people[i]);
-        return error_code;
-    }
-    else if (argc > 2 && !error_code) // Handle space between nubmers
-        error_code = 4;
-    else if (argc == 2 && !error_code){ // Error handling if is query number or +
-        int querry_number_length = (int)strlen(argv[1]);
-        for(i = 0; i < querry_number_length; i++)
-            if(!(argv[1][i] == '+' || isdigit(argv[1][i])))
-                error_code = 3;
-    }
-    if (argc == 2 && !error_code){
-        int querry_number_length = (int)strlen(argv[1]), was_there; // No need to search by name
-        was_there = printQuerriedContacts(people, argv[1], querry_number_length, number_of_rows);
-        if (!was_there && !error_code)
-            printf("Not found\n");
-        return error_code;
-    }
-    error_handler(error_code, number_of_rows);
-    return -error_code;
+int main(){
+    int int_buffer[2];
+    readFromFile(int_buffer);
+    return error_handler(int_buffer[0], int_buffer[1]);
 }
 
 void printPerson( Person p){
@@ -79,19 +61,21 @@ void printPerson( Person p){
     printf("\n");
 }
 
-int setPerson(Person *p, int num_rows, int val_len, char string_buffer[]){
+int setPerson(Person p, int num_rows, int val_len, char string_buffer[]){
     if (num_rows % 2 == 0){ // Row index is even therefor value is name
-        p->name_len = val_len;
+        p.name_len = val_len;
         for (int i = 0; i < val_len; i++)
-            p->name[i] = string_buffer[i];
+            p.name[i] = string_buffer[i];
     }
     else{ // Row index is odd therefor value is tel_num
-        p->tel_num_len = val_len;
-        for (int i = 0; i < val_len; i++)
+        p.tel_num_len = val_len;
+        for (int i = 0; i < val_len; i++){
             if(isdigit(string_buffer[i]) || string_buffer[i] == '+')
-                p->tel_num[i] = string_buffer[i];
+                p.tel_num[i] = string_buffer[i];
             else return 2;
+        }
     }
+    printf("%d\n", p.tel_num_len);
     return 0;
 }
 
@@ -182,29 +166,30 @@ int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows
     return was_there;
 }
 
-void readFromFile(Person *people, int buffer[2]){
+void readFromFile(int *int_buffer){
     int number_of_rows = 0, err_code = 0;
     char string_buffer[MAX], char_buffer = ' ';
+    Person temp_person;
     while (char_buffer != EOF || err_code){
         int j = 0;
-        char_buffer = getchar();
-        while (!(char_buffer == '\n' || char_buffer == EOF)){
+        while (!(char_buffer = getchar() == '\n' || char_buffer == EOF)){
             string_buffer[j] = char_buffer;
-            char_buffer = getchar();
             j++;
         }
-        if (j >= SIZE){
-            err_code = 1;
-            break;
+        if (j >= MAX){
+            int_buffer[0] = 1, int_buffer[1] = number_of_rows;
+            return;
         }
-        if ((err_code = setPerson(&people[(int)floor(number_of_rows / 2)], number_of_rows, j, string_buffer)))
-            break;
+        if ((int_buffer[0] = setPerson(temp_person, number_of_rows, j, string_buffer))){
+            int_buffer[1] = number_of_rows;
+            return;
+        }
         number_of_rows++;
+        // printQuerriedContact(temp_person, num, num_len);
     }
-    buffer[0] = number_of_rows, buffer[1] = err_code;
 }
 
-void error_handler(int error_code, int number_of_rows){
+int error_handler(int error_code, int number_of_rows){
     switch (error_code){
         case 1:
             printf("Error: Invalid line %d, too long line\n", number_of_rows + 1);
@@ -219,4 +204,5 @@ void error_handler(int error_code, int number_of_rows){
             printf("Error: Too many arguments\n");
             break;
     }
+    return error_code;
 }
