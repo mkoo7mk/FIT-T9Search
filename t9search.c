@@ -23,7 +23,7 @@ char T9ALPHABET[][5] = {{"0+"},
 typedef struct{
     char name[MAX];
     int name_len;
-    char tel_num[15];
+    char tel_num[MAX];
     int tel_num_len;
 
 } Person;
@@ -49,13 +49,12 @@ int main(int argc, char **argv){
     int lavenshtein = 0;
     readFromFile(people, int_buffer);
     int number_of_rows = int_buffer[0], error_code = int_buffer[1];
-
     if (argc == 1 && !error_code){ // No query
         for (i = 0; i < (int)floor(number_of_rows / 2); i++)
             printPerson(people[i]);
         return error_code;
     }
-    else if (argc > 2){ // Handle space between nubmers
+    else if (argc > 2 && !error_code){ // Handle space between nubmers
         error_code = 4;
         for(int i = 0; i < argc; i++){
             if(!strcmp(argv[i], "-l") && i + 1 < argc){ // Lavenshtein lets go
@@ -200,15 +199,15 @@ int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows
 void readFromFile(Person *people, int buffer[2]){
     int number_of_rows = 0, err_code = 0;
     char string_buffer[MAX], char_buffer = ' ';
-    while (char_buffer != EOF || err_code){
+    while (char_buffer != EOF && !err_code){
         int j = 0;
         char_buffer = getchar();
-        while (!(char_buffer == '\n' || char_buffer == EOF)){
+        while (!(char_buffer == '\n' || char_buffer == EOF || j >= MAX)){
             string_buffer[j] = char_buffer;
             char_buffer = getchar();
             j++;
         }
-        if (j >= SIZE){
+        if (j >= MAX){
             err_code = 1;
             break;
         }
