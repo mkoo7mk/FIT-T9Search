@@ -39,14 +39,14 @@ int queryNumbers(Person p, char num[], int num_len);
 int queryNameNumber(Person p, char num[], int num_len);
 int searchContact(Person p, char num[], int num_len, int lav);
 int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows_num, int lav);
-int lavenshteinDistance(Person p, char *word1, int name);
+int levenshteinDistance(Person p, char *word1, int name);
 int min(int a, int b, int c);
 int min2(int a, int b);
 
 int main(int argc, char **argv){
     Person people[SIZE];
     int int_buffer[2], i = 0;
-    int lavenshtein = 0;
+    int levenshtein = 0;
     readFromFile(people, int_buffer);
     int number_of_rows = int_buffer[0], error_code = int_buffer[1];
 
@@ -58,23 +58,21 @@ int main(int argc, char **argv){
     else if (argc > 2){ // Handle space between nubmers
         error_code = 4;
         for(int i = 0; i < argc; i++){
-            if(!strcmp(argv[i], "-l") && i + 1 < argc){ // Lavenshtein lets go
+            if(!strcmp(argv[i], "-l") && i + 1 < argc){ // levenshtein lets go
                 error_code = 0;
-                lavenshtein = atoi(argv[i + 1]);
+                levenshtein = atoi(argv[i + 1]);
                 break;
             }
         }
     }
-    else if (argc == 2){ // Error handling if is query number or +
-        int querry_number_length = (int)strlen(argv[1]);
-        for(i = 0; i < querry_number_length; i++)
+    else if (argc == 2) // Error handling if is query number or +
+        for(i = 0; i < (int)strlen(argv[1]); i++)
             if(!(argv[1][i] == '+' || isdigit(argv[1][i])))
                 error_code = 3;
-    }
 
     if (!error_code){
         int querry_number_length = (int)strlen(argv[1]), was_there; // No need to search by name
-        was_there = printQuerriedContacts(people, argv[1], querry_number_length, number_of_rows, lavenshtein);
+        was_there = printQuerriedContacts(people, argv[1], querry_number_length, number_of_rows, levenshtein);
         if (!was_there && !error_code)
             printf("Not found\n");
         return error_code;
@@ -182,8 +180,8 @@ int queryNameNumber(Person p, char num[], int num_len){
 
 int searchContact(Person p, char num[], int num_len, int lav){
     if (lav) return queryNumbers(p, num, num_len) || 
-    queryNameNumber(p, num, num_len) || lav >= lavenshteinDistance(p, num, 0);
-    return queryNumbers(p, num, num_len) || queryNameNumber(p, num, num_len); // No need to calculate lavenshtein distance
+    queryNameNumber(p, num, num_len) || lav >= levenshteinDistance(p, num, 0);
+    return queryNumbers(p, num, num_len) || queryNameNumber(p, num, num_len); // No need to calculate levenshtein distance
 }
 
 int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows_num, int lav){
@@ -236,7 +234,7 @@ void error_handler(int error_code, int number_of_rows){
     }
 }
 
-int lavenshteinDistance(Person p, char *word1, int name){
+int levenshteinDistance(Person p, char *word1, int name){
     word1 = toLower(word1);
     int i, j;
     char c1, c2;
@@ -263,7 +261,7 @@ int lavenshteinDistance(Person p, char *word1, int name){
             else matrix[i][j] = min(matrix[i-1][j] + 1, matrix[i][j-1] + 1, matrix[i-1][j-1] + 1);
         }
     }
-    return name ? min2(matrix[len1][len2], lavenshteinDistance(p, word1, 1)) : matrix[len1][len2];
+    return name ? min2(matrix[len1][len2], levenshteinDistance(p, word1, 1)) : matrix[len1][len2];
 }
 
 int min(int a, int b, int c){
