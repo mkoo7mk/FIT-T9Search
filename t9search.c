@@ -66,7 +66,7 @@ int main(int argc, char **argv){
     else if (argc > 2){ // Handle space between nubmers
         error_code = 4;
         for (int i = 0; i < argc; i++){
-            if (!strcmp(argv[i], "-l") && i + 1 < argc){ // levenshtein lets go
+            if (!strcmp(argv[i], "-l") && i + 1 < argc){ // Levenshtein and its args
                 error_code = 0;
                 levenshtein = atoi(argv[i + 1]); // returns number from string, if its letter, returns 0
                 break;
@@ -129,7 +129,7 @@ void strreplace(char *p, char old, char new, int only_first){
         }
     }
 }
-
+ 
 char charToInt(char c){
     char temp[2] = {c};
     for(int i = 0; i < 10; i++)
@@ -220,7 +220,7 @@ int levenshteinDistance(Person p, char *word1, int name){
     int i, j;
     char c1, c2;
     char char_buffer[name ? p.name_len : p.tel_num_len];
-    if (name)
+    if (name) // checking levenshtein distance for name and for number and returning lower
         for (i = 0; p.name[i] != '\0'; i++)
             char_buffer[i] = charToInt(p.name[i]);
     else
