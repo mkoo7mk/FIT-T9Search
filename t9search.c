@@ -6,10 +6,18 @@
 
 #define MAX 100
 #define SIZE 1000
-// gcc -std=c99 -Wall -Wextra -Werror t9search.c -o t9search
-// ./t9search 111 <seznam.txt
 
-char T9ALPHABET[][5] = {{"0+"},
+/*
+Disclaimers: 
+    1. I do not support letter or any other character in phone number except plus sign
+    2. I support plus in query
+    3. I support -l argument followed by number as Levenshtein distance
+    4. My implementation of a levenshtein distance do not shows substrings
+       it needs to find whole name or number within the levenshtein range 
+    5. I do not support non continuous substrings
+    6. I do not support -s argument
+*/
+char T9ALPHABET[][6] = {{"0+"},
                         {"1"},
                         {"2abc"},
                         {"3def"},
@@ -29,22 +37,22 @@ typedef struct{
 } Person;
 
 void printPerson(Person p);
-int setPerson(Person *p,int num_rows, int val_len, char string_buffer[]);
-char *toLower(char *a);
-void strreplace(char *p, char old, char new, int only_first);
-char charToInt(char c);
-void readFromFile(Person *people, int buffer[2]);
-void error_handler(int error_code, int number_of_rows);
-int queryNumbers(Person p, char num[], int num_len);
-int queryNameNumber(Person p, char num[], int num_len);
-int searchContact(Person p, char num[], int num_len, int lav);
-int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows_num, int lav);
-int levenshteinDistance(Person p, char *word1, int name);
-int min(int a, int b, int c);
-int min2(int a, int b);
+int setPerson(Person *p,int num_rows, int val_len, char string_buffer[]); // Set persons name and number
+char *toLower(char *a); // Convert to string lowercase
+void strreplace(char *p, char old, char new, int only_first); // Replace characters in string
+char charToInt(char c); // From char to index of T9ALPHABET: 2->abc...
+void readFromFile(Person *people, int buffer[2]); // Handling reading from file
+void error_handler(int error_code, int number_of_rows); // Printing error messages based on error code
+int queryNumbers(Person p, char num[], int num_len); // Query people by numbers
+int queryNameNumber(Person p, char num[]); // Query people by name
+int searchContact(Person p, char num[], int num_len, int lav); // Handling which queries are used
+int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows_num, int lav); 
+int levenshteinDistance(Person p, char *word1, int name); // Returns levenshtein distance
+int min(int a, int b, int c); // Returns lowest number of three 
+int min2(int a, int b); // Returns lowest number of two
 
 int main(int argc, char **argv){
-    Person people[SIZE];
+    Person people[SIZE]; // main array for people
     int int_buffer[2], i = 0;
     int levenshtein = 0;
     readFromFile(people, int_buffer);
@@ -57,17 +65,17 @@ int main(int argc, char **argv){
     }
     else if (argc > 2){ // Handle space between nubmers
         error_code = 4;
-        for(int i = 0; i < argc; i++){
-            if(!strcmp(argv[i], "-l") && i + 1 < argc){ // levenshtein lets go
+        for (int i = 0; i < argc; i++){
+            if (!strcmp(argv[i], "-l") && i + 1 < argc){ // levenshtein lets go
                 error_code = 0;
-                levenshtein = atoi(argv[i + 1]);
+                levenshtein = atoi(argv[i + 1]); // returns number from string, if its letter, returns 0
                 break;
             }
         }
     }
     else if (argc == 2) // Error handling if is query number or +
-        for(i = 0; i < (int)strlen(argv[1]); i++)
-            if(!(argv[1][i] == '+' || isdigit(argv[1][i])))
+        for (i = 0; i < (int)strlen(argv[1]); i++)
+            if (!(argv[1][i] == '+' || isdigit(argv[1][i])))
                 error_code = 3;
 
     if (!error_code){
@@ -123,65 +131,39 @@ void strreplace(char *p, char old, char new, int only_first){
 }
 
 char charToInt(char c){
-    char temp[] = {c};
-    for (int i = 0; i < 10; i++)
-        if (strstr(T9ALPHABET[i], toLower(temp)))
-            return i + '0';
+    char temp[2] = {c};
+    for(int i = 0; i < 10; i++)
+        if(strstr(T9ALPHABET[i], toLower(temp)) != NULL)
+            return (char)(i + 48);
     return ' ';
 }
 
 int queryNumbers(Person p, char num[], int num_len){
     // Only numbers querry with plus sign
-    int i, j, was_there;
     char num_plus[num_len];
-    for (i = 0; i < num_len; i++)
+    for (int i = 0; i < num_len; i++)
         num_plus[i] = num[i];
     if (strstr(num, "0") != NULL)
         strreplace(num_plus, '0', '+', 1);
-    for (i = 0; i <= p.tel_num_len - num_len; i++){
-        was_there = 0;
-        for (j = 0; j < num_len; j++){
-            if (p.tel_num[i + j] == num[j] || p.tel_num[i + j] == num_plus[j]){
-                was_there = 1;
-            }
-            else{
-                was_there = 0;
-                break;
-            }
-        }
-        if (was_there)
-            return 1;
-    }
+    if (strstr(p.tel_num, num_plus) != NULL || strstr(p.tel_num, num)) return 1;
     return 0;
 }
 
-int queryNameNumber(Person p, char num[], int num_len){
-    int i, j, was_there;
+int queryNameNumber(Person p, char num[]){
+    int i;
     char char_buffer[p.name_len];
-    for (i = 0; i < p.name_len; i++)
+    for (i = 0; p.name[i] != '\0'; i++)
         char_buffer[i] = charToInt(p.name[i]);
-    i = 0;
+    char_buffer[i] = '\0';
     toLower(char_buffer);
-    for (i = 0; i <= p.name_len - num_len; i++){ // Todo nenavazujuce substringy
-        was_there = 0;
-        for (j = 0; j < num_len; j++){
-            if (char_buffer[i + j] == num[j])
-                was_there = 1;
-            else{
-                was_there = 0;
-                break;
-            }
-        }
-        if (was_there)
-            return 1;
-    }
+    if (strstr(char_buffer, num) != NULL) return 1;
     return 0;
 }
 
 int searchContact(Person p, char num[], int num_len, int lav){
     if (lav) return queryNumbers(p, num, num_len) || 
-    queryNameNumber(p, num, num_len) || lav >= levenshteinDistance(p, num, 0);
-    return queryNumbers(p, num, num_len) || queryNameNumber(p, num, num_len); // No need to calculate levenshtein distance
+    queryNameNumber(p, num) || lav >= levenshteinDistance(p, num, 0);
+    return queryNumbers(p, num, num_len) || queryNameNumber(p, num); // No need to calculate levenshtein distance
 }
 
 int printQuerriedContacts(Person people[SIZE], char num[], int num_len, int rows_num, int lav){
@@ -220,48 +202,46 @@ void readFromFile(Person *people, int buffer[2]){
 void error_handler(int error_code, int number_of_rows){
     switch (error_code){
         case 1:
-            printf("Error: Invalid line %d, too long line\n", number_of_rows + 1);
+            fprintf(stderr, "Error: Invalid line %d, too long line\n", number_of_rows + 1);
             break;
         case 2:
-            printf("Error: Invalid phone number on line %d\n", number_of_rows + 1);
+            fprintf(stderr, "Error: Invalid phone number on line %d\n", number_of_rows + 1);
             break;
         case 3:
-            printf("Error: Invalid query\n");
+            fprintf(stderr, "Error: Invalid query\n");
             break;
         case 4:
-            printf("Error: Too many arguments\n");
+            fprintf(stderr, "Error: Too many or too little arguments\n");
             break;
     }
 }
 
 int levenshteinDistance(Person p, char *word1, int name){
-    word1 = toLower(word1);
     int i, j;
     char c1, c2;
     char char_buffer[name ? p.name_len : p.tel_num_len];
-    if(name){
-        for (i = 0; i < p.name_len; i++)
+    if (name)
+        for (i = 0; p.name[i] != '\0'; i++)
             char_buffer[i] = charToInt(p.name[i]);
-    }
-    else{
-        for (i = 0; i < p.tel_num_len; i++)
+    else
+        for (i = 0; p.tel_num[i] != '\0'; i++)
             char_buffer[i] = charToInt(p.tel_num[i]);        
-    }
-    char *word2 = toLower(char_buffer);
+    char_buffer[i] = '\0';
     int len1 = strlen(word1);
-    int len2 = strlen(word2);
+    int len2 = strlen(char_buffer);
     int matrix[len1 + 1][len2 + 1];
-    for(i = 0; i <= len1; i++) matrix[i][0] = i;
-    for(i = 0; i <= len2; i++) matrix[0][i] = i;
-    for(i = 1; i <= len1; i++) {
+
+    for (i = 0; i <= len1; i++) matrix[i][0] = i;
+    for (i = 0; i <= len2; i++) matrix[0][i] = i;
+    for (i = 1; i <= len1; i++) {
         c1 = word1[i-1];
-        for(j = 1; j <= len2; j++){
-            c2 = word2[j-1];
-            if(c1 == c2) matrix[i][j] = matrix[i - 1][j - 1];
+        for (j = 1; j <= len2; j++){
+            c2 = char_buffer[j-1];
+            if (c1 == c2) matrix[i][j] = matrix[i - 1][j - 1];
             else matrix[i][j] = min(matrix[i-1][j] + 1, matrix[i][j-1] + 1, matrix[i-1][j-1] + 1);
         }
     }
-    return name ? min2(matrix[len1][len2], levenshteinDistance(p, word1, 1)) : matrix[len1][len2];
+    return name ? matrix[len1][len2] : min2(matrix[len1][len2], levenshteinDistance(p, word1, 1));
 }
 
 int min(int a, int b, int c){
